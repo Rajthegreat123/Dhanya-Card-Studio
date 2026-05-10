@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "public": true,
   "rewrites": [
     { "source": "/api/generate-card", "destination": "/api/generate-card.js" },
     { "source": "/(.*)", "destination": "/index.html" }
