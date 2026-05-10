@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Family Card Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@400;600;800&family=Pacifico&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fbf7f2; --ink:#2b2620; --muted:#8a7f74; --accent:#d96a5a; --line:#e8e0d4; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Lora',Georgia,serif;}
+  header{padding:28px 24px 8px;text-align:center}
+  header h1{font-family:'Playfair Display',serif;font-weight:900;font-size:34px;margin:0;letter-spacing:.5px}
+  header p{color:var(--muted);margin:6px 0 0}
+  main{max-width:1100px;margin:24px auto;padding:0 20px;display:grid;grid-template-columns:320px 1fr;gap:24px}
+  @media (max-width:880px){main{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 6px 22px rgba(60,40,20,.05)}
+  label{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+  input[type=text],select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+  textarea{width:100%;min-height:70px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;resize:vertical}
+  button{cursor:pointer;border:none;border-radius:10px;padding:11px 14px;font:inherit;font-weight:700;transition:.15s}
+  .btn-primary{background:var(--accent);color:#fff;width:100%;margin-top:14px}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:#f4ede2;color:var(--ink)}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row > *{flex:1}
+  canvas{background:#eee url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><rect width='12' height='12' fill='%23f2ede5'/><rect x='12' y='12' width='12' height='12' fill='%23f2ede5'/></svg>");border-radius:14px;display:block;max-width:100%;height:auto;border:1px solid var(--line)}
+  .canvas-wrap{position:relative}
+  .style-bar{margin-top:14px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .style-bar label{margin-top:0}
+  .layers{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .layer-chip{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;cursor:pointer}
+  .layer-chip.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(217,106,90,.15)}
+  .small{font-size:12px;color:var(--muted)}
+  .loading{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.7);border-radius:14px;font-family:'Playfair Display',serif;font-style:italic}
+  .loading.show{display:flex}
+</style>
+</head>
+<body>
+<header>
+  <h1>Family Card Studio</h1>
+  <p>Make a beautiful card — for Amma, with love.</p>
+</header>
+
+<main>
+  <section class="panel">
+    <label>Occasion</label>
+    <select id="event">
+      <option>Birthday</option>
+      <option>Anniversary</option>
+      <option>Mother's Day</option>
+      <option>Wedding</option>
+      <option>Graduation</option>
+      <option>Thank You</option>
+    </select>
+
+    <label>Extra theme (optional)</label>
+    <input id="theme" type="text" placeholder="e.g. pink roses, vintage, gold accents" />
+
+    <label>Name</label>
+    <input id="name" type="text" placeholder="Geethoppa" />
+
+    <label>Message</label>
+    <textarea id="message" placeholder="With lots of ❤ kunju & Dhanya"></textarea>
+
+    <button class="btn-primary" id="generate">✨ Generate Background</button>
+    <p class="small" style="margin-top:10px">Tip: click & drag any text on the canvas to reposition it.</p>
+
+    <div class="layers" id="layers"></div>
+
+    <div class="style-bar">
+      <div>
+        <label>Font</label>
+        <select id="font">
+          <option value="'Playfair Display', serif">Playfair (Serif)</option>
+          <option value="'Montserrat', sans-serif">Montserrat (Bold)</option>
+          <option value="'Dancing Script', cursive">Dancing Script</option>
+          <option value="'Great Vibes', cursive">Great Vibes</option>
+          <option value="'Pacifico', cursive">Pacifico</option>
+          <option value="'Lora', serif">Lora</option>
+        </select>
+      </div>
+      <div>
+        <label>Color</label>
+        <input id="color" type="color" value="#d96a5a" style="width:100%;height:40px;border:1px solid var(--line);border-radius:8px;background:#fff" />
+      </div>
+      <div>
+        <label>Size: <span id="sizeVal">48</span>px</label>
+        <input id="size" type="range" min="14" max="140" value="48" style="width:100%" />
+      </div>
+      <div>
+        <label>Weight</label>
+        <select id="weight">
+          <option value="400">Regular</option>
+          <option value="700" selected>Bold</option>
+          <option value="900">Black</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:14px">
+      <button class="btn-ghost" id="download">⬇ Download PNG</button>
+    </div>
+  </section>
+
+  <section class="panel canvas-wrap">
+    <canvas id="canvas" width="1024" height="1024"></canvas>
+    <div class="loading" id="loading">Painting your card…</div>
+  </section>
+</main>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const state = {
+  bg: null,           // HTMLImageElement
+  layers: [],         // {id,label,key,text,x,y,font,color,size,weight}
+  activeId: null,
+  drag: null,
+};
+
+// Initial demo background (pastel) so the canvas isn't empty
+function paintPlaceholder(){
+  const g = ctx.createLinearGradient(0,0,1024,1024);
+  g.addColorStop(0,'#fdeee4'); g.addColorStop(1,'#f5d6c6');
+  ctx.fillStyle = g; ctx.fillRect(0,0,1024,1024);
+  ctx.fillStyle = '#b58a7a'; ctx.font = "italic 28px 'Playfair Display', serif";
+  ctx.textAlign='center';
+  ctx.fillText('Generate a background to begin', 512, 512);
+}
+paintPlaceholder();
+
+function rebuildLayers(){
+  const name = document.getElementById('name').value.trim();
+  const msg  = document.getElementById('message').value.trim();
+  const evt  = document.getElementById('event').value.trim();
+
+  const defaults = {
+    font: document.getElementById('font').value,
+    color: document.getElementById('color').value,
+    size: +document.getElementById('size').value,
+    weight: document.getElementById('weight').value
+  };
+
+  // preserve previous positions/styles when text changes
+  const prev = Object.fromEntries(state.layers.map(l=>[l.key,l]));
+  const newLayers = [];
+  if (evt)  newLayers.push(makeLayer('event', 'Event', evt, 512, 140, prev.event, defaults));
+  if (name) newLayers.push(makeLayer('name', 'Name', name, 512, 520, prev.name, {...defaults,size:72}));
+  if (msg)  newLayers.push(makeLayer('message','Message', msg, 512, 880, prev.message, {...defaults,size:38,font:"'Dancing Script',cursive"}));
+  state.layers = newLayers;
+  if (!state.layers.find(l=>l.id===state.activeId)) state.activeId = state.layers[0]?.id ?? null;
+  renderLayerList();
+  draw();
+}
+
+function makeLayer(key,label,text,x,y,prev,defaults){
+  return {
+    id: key,
+    key, label, text,
+    x: prev?.x ?? x,
+    y: prev?.y ?? y,
+    font: prev?.font ?? defaults.font,
+    color: prev?.color ?? defaults.color,
+    size: prev?.size ?? defaults.size,
+    weight: prev?.weight ?? defaults.weight,
+  };
+}
+
+function renderLayerList(){
+  const wrap = document.getElementById('layers');
+  wrap.innerHTML = '';
+  state.layers.forEach(l=>{
+    const el = document.createElement('div');
+    el.className = 'layer-chip' + (l.id===state.activeId?' active':'');
+    el.innerHTML = `<span><strong>${l.label}</strong> · ${l.text.slice(0,22)}${l.text.length>22?'…':''}</span><span class="small">edit</span>`;
+    el.onclick = ()=>{ state.activeId = l.id; syncControlsFromActive(); renderLayerList(); draw(); };
+    wrap.appendChild(el);
+  });
+}
+
+function syncControlsFromActive(){
+  const l = state.layers.find(x=>x.id===state.activeId); if(!l) return;
+  document.getElementById('font').value = l.font;
+  document.getElementById('color').value = l.color;
+  document.getElementById('size').value = l.size;
+  document.getElementById('sizeVal').textContent = l.size;
+  document.getElementById('weight').value = l.weight;
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if (state.bg) ctx.drawImage(state.bg, 0, 0, canvas.width, canvas.height);
+  else paintPlaceholder();
+
+  state.layers.forEach(l=>{
+    ctx.save();
+    ctx.font = `${l.weight} ${l.size}px ${l.font}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    // soft white pill behind text for legibility (like the references)
+    const metrics = ctx.measureText(l.text);
+    const padX = 22, padY = 14;
+    const w = metrics.width + padX*2;
+    const h = l.size*1.25 + padY;
+    roundRect(ctx, l.x - w/2, l.y - h/2, w, h, 14);
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.fill();
+    ctx.fillStyle = l.color;
+    ctx.fillText(l.text, l.x, l.y);
+    if (l.id === state.activeId){
+      ctx.strokeStyle = 'rgba(217,106,90,0.6)';
+      ctx.setLineDash([6,4]); ctx.lineWidth=2; ctx.stroke();
+    }
+    ctx.restore();
+  });
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+// ---- Drag & drop ----
+function canvasPos(e){
+  const r = canvas.getBoundingClientRect();
+  const t = e.touches?.[0] || e;
+  return { x:(t.clientX-r.left)*(canvas.width/r.width), y:(t.clientY-r.top)*(canvas.height/r.height) };
+}
+function hit(p){
+  // iterate top-to-bottom
+  for (let i=state.layers.length-1;i>=0;i--){
+    const l = state.layers[i];
+    ctx.font = `${l.weight} ${l.size}px ${l.font}`;
+    const w = ctx.measureText(l.text).width + 44;
+    const h = l.size*1.25 + 14;
+    if (p.x>=l.x-w/2 && p.x<=l.x+w/2 && p.y>=l.y-h/2 && p.y<=l.y+h/2) return l;
+  }
+  return null;
+}
+function startDrag(e){
+  const p = canvasPos(e); const l = hit(p);
+  if (!l) return;
+  state.activeId = l.id;
+  state.drag = { dx: p.x-l.x, dy: p.y-l.y };
+  syncControlsFromActive(); renderLayerList(); draw();
+  e.preventDefault();
+}
+function moveDrag(e){
+  if(!state.drag) return;
+  const p = canvasPos(e);
+  const l = state.layers.find(x=>x.id===state.activeId); if(!l) return;
+  l.x = p.x - state.drag.dx; l.y = p.y - state.drag.dy;
+  draw();
+}
+function endDrag(){ state.drag=null; }
+
+canvas.addEventListener('mousedown',startDrag);
+window.addEventListener('mousemove',moveDrag);
+window.addEventListener('mouseup',endDrag);
+canvas.addEventListener('touchstart',startDrag,{passive:false});
+canvas.addEventListener('touchmove',moveDrag,{passive:false});
+canvas.addEventListener('touchend',endDrag);
+
+// ---- Controls ----
+['name','message','event'].forEach(id=>document.getElementById(id).addEventListener('input',rebuildLayers));
+['font','color','size','weight'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', e=>{
+    if(id==='size') document.getElementById('sizeVal').textContent = e.target.value;
+    const l = state.layers.find(x=>x.id===state.activeId); if(!l) return;
+    l[id] = id==='size' ? +e.target.value : e.target.value;
+    draw();
+  });
+});
+
+// ---- Generate ----
+document.getElementById('generate').addEventListener('click', async ()=>{
+  const loading = document.getElementById('loading'); loading.classList.add('show');
+  try{
+    const res = await fetch('/api/generate-card',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        event: document.getElementById('event').value,
+        theme: document.getElementById('theme').value
+      })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||'Failed');
+    const img = new Image(); img.crossOrigin='anonymous';
+    img.onload = ()=>{ state.bg = img; rebuildLayers(); };
+    img.src = data.imageUrl;
+  }catch(err){
+    alert('Could not generate image: '+err.message);
+  }finally{
+    loading.classList.remove('show');
+  }
+});
+
+// ---- Download ----
+document.getElementById('download').addEventListener('click', ()=>{
+  // redraw without selection outline
+  const prev = state.activeId; state.activeId = null; draw();
+  const url = canvas.toDataURL('image/png');
+  state.activeId = prev; draw();
+  const a = document.createElement('a'); a.href = url; a.download = 'family-card.png'; a.click();
+});
+
+// seed defaults
+document.getElementById('name').value = 'Geethoppa';
+document.getElementById('message').value = 'With lots of ❤ kunju & Dhanya';
+rebuildLayers();
+</script>
+</body>
+</html>
